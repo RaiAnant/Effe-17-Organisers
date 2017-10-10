@@ -15,6 +15,7 @@ import java.util.*
 class MainActivity : AppCompatActivity() {
     lateinit var mFirebaseAuth : FirebaseAuth
     lateinit var mAuthStateListener : FirebaseAuth.AuthStateListener
+    var userName = ""
     private val RC_SIGN_IN = 1
 
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
@@ -48,8 +49,9 @@ class MainActivity : AppCompatActivity() {
         mAuthStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
             val user = firebaseAuth.currentUser
             if (user != null){
-
+                userName = user.email.toString()
             } else{
+                userName = ""
                 startActivityForResult(
                         AuthUI.getInstance()
                                 .createSignInIntentBuilder()
@@ -70,6 +72,7 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
         if(item!!.itemId == R.id.sign_out) {
             AuthUI.getInstance().signOut(this)
+            userName = ""
             return true
         }
         return super.onOptionsItemSelected(item)
