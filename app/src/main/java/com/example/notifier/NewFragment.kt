@@ -96,7 +96,7 @@ class NewFragment :Fragment() {
 
             val client = OkHttpClient()
 
-            val bodyString = "{\"description\":" + description + ",\"senderName\":"+ act.userName +",\"timestamp\":1265498468,\"title\":\"Gully Cricket\"}"
+            val bodyString = "{\"description\":" + description + ",\"senderName\":"+ act.userName +",\"timestamp\":1265498468,\"title\":" +message + "}"
 
             val body = RequestBody.create(JSON,bodyString)
             try {
