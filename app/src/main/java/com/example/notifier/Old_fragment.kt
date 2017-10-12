@@ -19,14 +19,31 @@ import org.json.JSONObject
  * Created by akshat on 4/10/17.
  */
 class Old_fragment: Fragment() {
-    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        val view = inflater!!.inflate(R.layout.fragment_old,container,false)
-        return view
+    private lateinit var updatesAdapter : UpdatesAdapter
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? =
+            inflater.inflate(R.layout.fragment_old, container, false)
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        refreshAdapter(view)
+
+        refresh.setColorSchemeResources(R.color.colorAccent)
+
+        refresh.setOnRefreshListener {
+            refreshAdapter(view)
+            refresh.isRefreshing = false
+        }
+
+        updatesAdapter = UpdatesAdapter()
+        updatesRV.adapter = updatesAdapter
+        updatesRV.layoutManager = LinearLayoutManager(activity, LinearLayout.VERTICAL, false)
+
     }
 
-    override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        fetchLatestData(view!!)
+
+    private fun refreshAdapter(view: View){
+        noNotifsTV.visibility = View.GONE
+        fetchLatestData(view)
     }
 
     private fun fetchLatestData(view: View){
@@ -45,7 +62,6 @@ class Old_fragment: Fragment() {
                     while (keys.hasNext()) {
                         val key = keys.next().toString()
                         val childObj = body.getJSONObject(key)
-                        Log.d("akshat", childObj.toString())
                         if (childObj != null) {
                             val newNotification = Notification()
                             newNotification.description = childObj.getString("description")
@@ -56,21 +72,18 @@ class Old_fragment: Fragment() {
                         }
                     }
                     uiThread {
-                        progressBar?.visibility = View.GONE
-                        sentNotifications?.visibility = View.VISIBLE
-                        var notificationAdapter = NotificationsAdapter(updatesList)
-                        sentNotifications?.adapter = notificationAdapter
-                        sentNotifications?.layoutManager = LinearLayoutManager(activity,LinearLayout.VERTICAL,false)
+                        noNotifsTV?.visibility = View.GONE
+                        updatesRV?.visibility = View.VISIBLE
+                        updatesAdapter.updateData(updatesList)
                     }
                 }
-            }catch (e: Exception) {
+            } catch (e: Exception) {
                 uiThread {
-                    progressBar?.visibility = View.VISIBLE
-                    sentNotifications?.visibility = View.GONE
+                    noNotifsTV?.visibility = View.VISIBLE
+                    noNotifsTV?.text = "No Notifications !!"
+                    updatesRV?.visibility = View.GONE
                 }
             }
-
-
         }
     }
 }

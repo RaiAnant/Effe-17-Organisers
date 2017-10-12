@@ -21,13 +21,13 @@ class MainActivity : AppCompatActivity() {
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
         when (item.itemId) {
             R.id.new_notification -> {
-                val newFragment = Fragment.instantiate(baseContext,NewFragment::class.java!!.name)
+                val newFragment = Fragment.instantiate(baseContext,NewFragment::class.java.name)
                         as NewFragment
                 fragmentManager.beginTransaction().replace(R.id.fragment,newFragment).commit()
                 return@OnNavigationItemSelectedListener true
             }
             R.id.sent_notifications -> {
-                val oldFragment = Fragment.instantiate(baseContext,Old_fragment::class.java!!.name)
+                val oldFragment = Fragment.instantiate(baseContext,Old_fragment::class.java.name)
                         as Old_fragment
                 fragmentManager.beginTransaction().replace(R.id.fragment,oldFragment).commit()
                 return@OnNavigationItemSelectedListener true
@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         mFirebaseAuth = FirebaseAuth.getInstance()
 
-        val newFragment = Fragment.instantiate(baseContext,NewFragment::class.java!!.name)
+        val newFragment = Fragment.instantiate(baseContext,NewFragment::class.java.name)
                 as NewFragment
         fragmentManager.beginTransaction().replace(R.id.fragment,newFragment).commit()
 
@@ -69,8 +69,8 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        if(item!!.itemId == R.id.sign_out) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if(item.itemId == R.id.sign_out) {
             AuthUI.getInstance().signOut(this)
             userName = ""
             return true

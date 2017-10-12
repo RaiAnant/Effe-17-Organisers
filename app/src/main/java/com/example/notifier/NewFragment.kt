@@ -2,7 +2,9 @@ package com.example.notifier
 
 import android.app.Activity
 import android.app.Fragment
+import android.app.ProgressDialog
 import android.os.Bundle
+import android.support.v4.content.ContextCompat
 import android.support.v7.widget.LinearLayoutManager
 import android.util.Log
 import android.view.LayoutInflater
@@ -16,6 +18,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
 import org.json.JSONObject
 
@@ -30,20 +33,19 @@ class NewFragment :Fragment() {
         return view
     }
 
-    override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
 
 
-        view!!.send_button.setOnClickListener { v ->
+        view.send_button.setOnClickListener { v ->
 
-            val message = view!!.notification_text.toString().trim()
-            val description = view!!.description_text.toString().trim()
+            val message = view.notification_text.text.toString()
+            val description = view.description_text.text.toString()
             if( message != "" && description != "") {
-                //sendNotification(message,description)
-                updateDB(message,description)
-                view!!.notification_text.setText("")
-                view!!.description_text.setText("")
+                sendNotification(message,description)
+                view.notification_text.setText("")
+                view.description_text.setText("")
             } else {
                 Toast.makeText(activity,"Either title or description is empty",Toast.LENGTH_SHORT).show()
             }
@@ -51,19 +53,25 @@ class NewFragment :Fragment() {
     }
 
     fun sendNotification(message: String, description: String) {
+        var act = (activity) as MainActivity
+        val dialog = ProgressDialog(activity)
+        dialog.setTitle("Sending notification...")
+        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER)
+        dialog.show()
         doAsync {
             try {
-                val GCM_API_KEY = R.string.GCM_KEY
+                val GCM_API_KEY = getString(R.string.GCM_KEY)
                 val JSON: MediaType = MediaType.parse("application/json; charset=utf-8");
 
                 val client = OkHttpClient()
 
                 val bodyString = "{\n" +
                         "  \"to\": \"/topics/all\",\n" +
-                        "   \"priority\": \"high\"" +
+                        "   \"priority\": \"high\",\n" +
                         "  \"notification\": {\n" +
-                        "    \"title\": " + message + ","  +
-                        "    \"message\": " + description + "," +
+                        "    \"title\": \"" + message + "\","  +
+                        "    \"body\": \"" + description + "\"," +
+                        "  \"sound\": \"default\"," +
                         "   }\n" +
                         "}"
 
@@ -76,38 +84,44 @@ class NewFragment :Fragment() {
                         .post(body)
                         .build()
                 val response = client.newCall(request).execute()
-                if(!response.isSuccessful){
+                if(response.isSuccessful){
+                        val JSON: MediaType = MediaType.parse("application/json; charset=utf-8");
+
+                        val client = OkHttpClient()
+
+                        val bodyString = "{\"description\":\"" + description + "\",\"senderName\":\""+ act.userName +"\",\"timestamp\":1265498468,\"title\":\"" +message + "\"}"
+
+                        val body = RequestBody.create(JSON,bodyString)
+                        try {
+                            val request = Request.Builder()
+                                    .url("https://effervescence-17.firebaseio.com/notifications.json")
+                                    .post(body)
+                                    .build()
+                            val response = client.newCall(request).execute()
+                            if(response.isSuccessful) {
+                                uiThread {
+                                    dialog.dismiss()
+                                    toast("Notification Sent")
+                                }
+                            }
+
+                        } catch (e : Exception) {
+                            uiThread {
+                                dialog.dismiss()
+                                Toast.makeText(activity,"Unsuccessful ",Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                }
+                 else {
                     uiThread {
-                        Toast.makeText(activity,"Unsuccessful " + response.toString(),Toast.LENGTH_SHORT).show()
+                        dialog.dismiss()
+                        Toast.makeText(activity,"Unsuccessful ",Toast.LENGTH_SHORT).show()
                     }
                 }
             }catch (e: Exception) {
                 uiThread {
-                    Toast.makeText(activity,"Exception",Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
-
-    private fun updateDB(message: String,description: String){
-        var act = (activity) as MainActivity
-        doAsync {
-            val JSON: MediaType = MediaType.parse("application/json; charset=utf-8");
-
-            val client = OkHttpClient()
-
-            val bodyString = "{\"description\":" + description + ",\"senderName\":"+ act.userName +",\"timestamp\":1265498468,\"title\":" +message + "}"
-
-            val body = RequestBody.create(JSON,bodyString)
-            try {
-                val request = Request.Builder()
-                        .url("https://effervescence-17.firebaseio.com/notifications.json")
-                        .post(body)
-                        .build()
-                client.newCall(request).execute()
-            } catch (e : Exception) {
-                uiThread {
-                    Log.d("akshat",e.toString())
+                    dialog.dismiss()
+                    toast("Unsuccessful")
                 }
             }
         }
